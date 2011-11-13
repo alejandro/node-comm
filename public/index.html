@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+<title>Index</title>
+</head>
+
+<body>
+<div id="container"></div>
+
+<script src="http://code.jquery.com/jquery.js"></script>
+<script src="https://github.com/BorisMoore/jsrender/raw/master/jsrender.js"></script>
+<!-- What your data should look like -->
+<script id="data" type="data">
+[
+{ lol: 0, data: "hi0"  , date: Date.now() },
+{ lol: 1, data: "hi1"  , date: Date.now() },
+{ lol: 2, data: "hi2"  , date: Date.now() },
+{ lol: 3, data: "hi3"  , date: Date.now() },
+{ lol: 4, data: "hi4"  , date: Date.now() },
+{ lol: 5, data: "hi5"  , date: Date.now() },
+{ lol: 6, data: "hi6"  , date: Date.now() },
+{ lol: 7, data: "hi7"  , date: Date.now() },
+{ lol: 8, data: "hi8"  , date: Date.now() },
+{ lol: 9, data: "hi9"  , date: Date.now() },
+{ lol: 10, data: "hi10", date: Date.now() },
+{ lol: 11, data: "hi11", date: Date.now() },
+{ lol: 12, data: "hi12", date: Date.now() },
+{ lol: 13, data: "hi13", date: Date.now() },
+{ lol: 14, data: "hi14", date: Date.now() },
+{ lol: 15, data: "hi15", date: Date.now() }
+]
+</script>
+
+<script id="tmpl" type="template">
+  <table>
+    {{#each data}}
+      <tr>
+        <td><b>{{=lol}}</b></td>
+          <td>{{=data}}</td>
+          <td>{{=date}}</td>
+        <td>
+        {{#if inner.length}}
+          {{#each inner}}
+            {{=i}}, 
+         {{/each}}
+        {{/if}}
+        </td>
+      </tr>
+    {{/each}}
+  </table>
+</script>
+
+<script>
+  jQuery(function($) {
+    var tmpl = $("#tmpl");
+    var container = $("#container");
+    $.views.allowCode = true;
+    function render() {
+      // Generate *fake* data
+      var data = function() {
+      var _data = [];
+      var obj, rand;
+      for (var i=0; i<100; i++) {
+        _data.push(obj = { lol: i, data: "hi"+i, date: (new Date).toString() });
+        rand = Math.floor(Math.random()*50);
+        obj.inner = [];
+        for (var j=0; j<rand; j++) {
+          obj.inner.push(j);
+        }
+      }
+      return _data;
+      }();
+      var start = +new Date();
+      container.html(
+      tmpl.render({ data: data })
+      );
+      var end = +new Date();
+      console.log( end-start, "ms" );
+    }
+    window.setInterval(render, 1000);
+    render();
+  });
+</script>
+  
+</body>
+</html>
