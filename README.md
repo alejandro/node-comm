@@ -17,8 +17,11 @@ Installation
 ------------
 
 At this moment only exist this repository so if you want to test it out
+
     git clone git://github.com/alejandromg/node-comm.git
+
 Then:
+
     npm install
 
 Contributors:
