@@ -1,2 +1,14 @@
 h1= title
-p Welcome to #{title}
+p Login
+
+p Try accessing 
+  a(href="/restricted") /restricted.
+form(method="post", action="/login")  
+  p
+    label Username:
+    input( type="text", name="username")
+  p
+    label Password:
+    input(type="text", name="password")
+  p
+    input(type="submit",value="Login")

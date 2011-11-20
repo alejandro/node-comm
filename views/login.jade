@@ -1,0 +1,11 @@
+h1 Login
+- if (message)
+  div= message
+p Try accessing 
+  a(href="/restricted") /restricted 
+form(method="post", action="/login")
+    label Username:
+    input(type="text", name="username")
+    label Pass:
+    input(type="password", name="password")  
+    input(type="submit", value="Login")

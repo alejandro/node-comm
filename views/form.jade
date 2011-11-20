@@ -1,0 +1,59 @@
+form(action="javascript:alert('success!');",id="form")
+  input(type="hidden",id="reply",name="reply")
+  input(type="hidden",id="userId",name="userId",value= user.id || "")
+  input(type="hidden",id="url")
+  label Comment:
+  textarea(name="comment",id="comment")
+  input(type="submit",value="submit")
+script
+  var p = document.getElementById('url');
+  p.value = window.location.href;
+script
+  $(document).ready(function(){
+    now.ready(function(){
+          now.fetchByThread({url: window.location.href},function(e,r){
+            if (e === null) {
+              window.r = r; // I like this objects
+              i = 0;
+              for(var m in r){
+                if(m ==='id') { 
+                }else {
+                  var comment = JSON.parse(r[m]);
+                  var NODE ='';
+                  if ( (comment.authorName || comment.authorId) === "#{user.id}") {
+                     NODE = '> <a href="#" id="edit">Edit </a> | <a href="#" id="delete">Delete</a></div>' 
+                  }
+                  $('body').append("<br><div id='comment" + i +"'><label>"+ (comment.authorName || comment.authorId) +  ":</label><p> " + comment.comment + "</p><input type='hidden' id='commentId"+ i+"' value='"+JSON.stringify(r[m])+"'>" + (NODE || '</div>') );
+                }
+                i++;
+              }
+            } else {
+              console.log(e)
+            }
+          });
+          now.receiveMessage = function(name, message){
+            if (name === "#{user.id}") {
+              $('body').append("<br>" + name + ": " + message + ' <a href="#" id="edit">Edit </a> | <a href="#" id="delete">Delete</a>');   
+            } else {
+              $('body').append("<br>" + name + ": " + message);
+            }
+          }
+      now.joinRoom({url: document.getElementById('url').value,id:document.getElementById('userId').value});
+     
+    })
+    //setInterval(function(){this.now.hear(Date.now())},1000)
+    /* { url:'http://numbus.co:8080/f/prueba/h', 
+    comment: { authorId: "4ebef2c27f21bd298a000000", comment: "YOUR COMMENT",time: Date.now(), 
+    parent: "URL parent or comment parent as reply" } }  */
+     $('#form').submit(function(){
+        now.sendComment({url: window.location.href,
+          data: {
+            authorId:"#{user.id}",
+            comment: $('#comment').val() || 'Null',
+            time: new Date(Date.now()),
+            parent:$('#reply').val() || window.location.href
+          }
+        });
+      return false;
+    });
+  });

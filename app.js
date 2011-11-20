@@ -1,24 +1,25 @@
+var express = require('express'),
+    crypto = require('crypto'),
+    url = require('url'),
+    sys = require('util'),
+    util = require('./lib/utils').util,
+    app = module.exports =  express.createServer( express.cookieParser(),
+  express.session({ secret: 'keyboard cat' })),
+    nowjs = require('now'),
+    groups =[],
+    ID=require('./lib/ObjectID').ObjectId;
 
-/**
- * Module dependencies.
- */
-
-var express = require('express')
-  , routes = require('./routes')
-
-var app = module.exports = express.createServer();
-
-// Configuration
-
+var comments = require('./lib/comments');
+/* A little hack for correct handle of session */
+  
 app.configure(function(){
-  app.set('views', __dirname + '/views');
-  app.set('view engine', 'jade');
-  app.use(express.bodyParser());
-  app.use(express.methodOverride());
+  app.set('views',__dirname+ '/views');
+  app.set('view engine','jade');
   app.use(app.router);
-  app.use(express.static(__dirname + '/public'));
+  app.use(express.static(__dirname+'/public'));
+  app.use(express.methodOverride());
+  app.use(express.bodyParser());
 });
-
 app.configure('development', function(){
   app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
@@ -26,10 +27,97 @@ app.configure('development', function(){
 app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
+app.dynamicHelpers({
+  message: function(req){
+    var err = req.session.error
+      , msg = req.session.success;
+    delete req.session.error;
+    delete req.session.success;
+    if (err) return '<p class="msg error">' + err + '</p>';
+    if (msg) return '<p class="msg success">' + msg + '</p>';
+  }
+});
 
-// Routes
+app.get('/', function(req, res){
+  var n = new ID().toString()
+  res.render("form",{user: { id: n},title:"HOME"})
+});
 
-app.get('/', routes.index);
+app.get('/otraURL',function(req,res){
+  console.log(req.url);
+  var n = new ID().toString();
+  res.render("form",{user: { id: n},title:"otraURL"})
+});
+app.get('/login', function(req, res){
+  res.render('login',{title:'Hol'});
+});
 
-app.listen(3000);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+app.post('/login', function(req, res){
+});
+// Regresa el index num de un valor en una array como el de un 
+// objeto objeto["VALOR"] -> array[indexOf(array,VALOR)]
+function indexOf(array, value){
+  var i = 0, f=-1;
+  array.forEach(function(v) {
+    if (v.member.groupName === value) {
+      f = i;
+    } else if (array.length=== i){
+      return false;
+    } else {
+      i++;
+    }
+  });    
+  return f;
+}
+// Una array es miembro 
+function isMember(array,path){
+  var i = 0,f=-1;
+  array.forEach(function(v){
+    if (v.member.groupName === path) {
+      f = 0;
+    } else {
+      i++
+    }
+  });
+  return f;
+}
+app.listen(process.env.PORT || 8080);
+console.log('Server on port: %s \non: %s ',app.address().port,app.settings.env);
+
+var everyone = nowjs.initialize(app);
+everyone.now.joinRoom = function(req){
+     nowjs.getGroup(req.url).addUser(this.user.clientId);
+}
+everyone.now.sendComment = function(req) {
+  /* { url:'http://numbus.co:8080/f/prueba/h', 
+    comment: { authorId: "4ebef2c27f21bd298a000000", comment: "YOUR COMMENT",time: Date.now(), 
+    parent: "URL parent or comment parent as reply" } }  */
+    comments.newComment(req, function(e,d){
+      nowjs.getGroup(req.url).now.receiveMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
+    });
+}
+everyone.now.fetchBySite = function(req,res){
+  comments.fetchBySite(req.url,function(e,r){
+    res(e,r);
+  });
+}
+everyone.now.fetchByThread = function(req,res){
+  comments.fetchByThread(req,function(e,r){
+    res(e,r);
+  });
+}
+everyone.now.send = function(req){   
+  if (req.data) {
+    nowjs.getGroup(req.url).now.receiveMessage(req.data.id, req.data.msg)   
+  } 
+}
+everyone.now.delete = function(req){
+  comments.deleteComment(req,function(e,d){
+    nowjs.getGroup(req.url).now.onEditMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
+  });
+}
+everyone.now.edit = function(req){
+  comments.edit(req,function(e,d){
+    nowjs.getGroup(req.url).now.onEditMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
+  });
+}
