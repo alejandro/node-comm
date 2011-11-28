@@ -26,7 +26,9 @@ script
                   if ( (comment.authorName || comment.authorId) === "#{user.id}") {
                      NODE = '> <a href="#" id="edit">Edit </a> | <a href="#" id="delete">Delete</a></div>' 
                   }
+                  now.autoLink(comment.comment, function(res){ comment.comment = res;
                   $('#comments').prepend("<br><div id='comment" + i +"'><label>"+ (comment.authorName || comment.authorId) +  ":</label><p> " + comment.comment + "</p><input type='hidden' id='commentId"+ i+"' value='"+ JSON.stringify(r[m])+"'>" + (NODE || '</div>') );
+                  });
                 }
                 i++;
               }

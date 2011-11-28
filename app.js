@@ -128,3 +128,6 @@ everyone.now.edit = function(req){
     nowjs.getGroup(req.url).now.onEditMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
   });
 }
+everyone.now.autoLink = function(req, res){
+ res(escape.autoLink(req));
+}
