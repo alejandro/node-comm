@@ -78,7 +78,7 @@
       tmpl.render({ data: data })
       );
       var end = +new Date();
-      console.log( end-start, "ms" );
+      console.log( (end-start)+ "ms" );
     }
     window.setInterval(render, 1000);
     render();

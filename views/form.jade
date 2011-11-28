@@ -5,6 +5,9 @@ form(action="javascript:alert('success!');",id="form")
   label Comment:
   textarea(name="comment",id="comment")
   input(type="submit",value="submit")
+
+#comments
+
 script
   var p = document.getElementById('url');
   p.value = window.location.href;
@@ -23,7 +26,7 @@ script
                   if ( (comment.authorName || comment.authorId) === "#{user.id}") {
                      NODE = '> <a href="#" id="edit">Edit </a> | <a href="#" id="delete">Delete</a></div>' 
                   }
-                  $('body').append("<br><div id='comment" + i +"'><label>"+ (comment.authorName || comment.authorId) +  ":</label><p> " + comment.comment + "</p><input type='hidden' id='commentId"+ i+"' value='"+JSON.stringify(r[m])+"'>" + (NODE || '</div>') );
+                  $('#comments').prepend("<br><div id='comment" + i +"'><label>"+ (comment.authorName || comment.authorId) +  ":</label><p> " + comment.comment + "</p><input type='hidden' id='commentId"+ i+"' value='"+ JSON.stringify(r[m])+"'>" + (NODE || '</div>') );
                 }
                 i++;
               }
@@ -31,13 +34,18 @@ script
               console.log(e)
             }
           });
+          // TODO
+          $('.edit').click(function(){
+            console.log(this.closest('div'));
+          });
           now.receiveMessage = function(name, message){
-            if (name === "#{user.id}") {
-              $('body').append("<br>" + name + ": " + message + ' <a href="#" id="edit">Edit </a> | <a href="#" id="delete">Delete</a>');   
-            } else {
-              $('body').append("<br>" + name + ": " + message);
+             var NODE ='';
+             var i = (parseFloat($('#comments div')[0].id.substr(7)) + 1);
+             if ( name === "#{user.id}") {
+               NODE = '> <a href="#" class="edit">Edit </a> | <a href="#" class="delete">Delete</a></div>' 
+              }
+              $('#comments').prepend("<br><div id='comment" + i +"'><label>"+ name +  ":</label><p> " + message + "</p><input type='hidden' id='commentId"+ "' value='"+message+"'" + (NODE || '</div>') );
             }
-          }
       now.joinRoom({url: document.getElementById('url').value,id:document.getElementById('userId').value});
      
     })

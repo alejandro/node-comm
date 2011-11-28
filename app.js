@@ -7,9 +7,11 @@ var express = require('express'),
   express.session({ secret: 'keyboard cat' })),
     nowjs = require('now'),
     groups =[],
-    ID=require('./lib/ObjectID').ObjectId;
+    escape = require('./lib/autolink'),
+    ID=require('./lib/ObjectID').ObjectId; // for testing purpose
 
-var comments = require('./lib/comments');
+var comments = require('./lib/comments'),
+    Comment = require('./lib/comments').Comment;
 /* A little hack for correct handle of session */
   
 app.configure(function(){
@@ -89,11 +91,16 @@ everyone.now.joinRoom = function(req){
      nowjs.getGroup(req.url).addUser(this.user.clientId);
 }
 everyone.now.sendComment = function(req) {
-  /* { url:'http://numbus.co:8080/f/prueba/h', 
-    comment: { authorId: "4ebef2c27f21bd298a000000", comment: "YOUR COMMENT",time: Date.now(), 
-    parent: "URL parent or comment parent as reply" } }  */
-    comments.newComment(req, function(e,d){
-      nowjs.getGroup(req.url).now.receiveMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
+    var self = this;
+    req = new Comment(req);
+    req.save(function(e,d){
+      if (d) {
+        nowjs.getGroup(req.url).now.receiveMessage(req.data.authorId,escape.autoLink(util.toStaticHTML(req.data.comment)));
+      } else {
+        nowjs.getClient(self.user.clientId, function(){        
+          this.now.receiveMessage('SERVER:', req.validateC());
+        });
+      }
     });
 }
 everyone.now.fetchBySite = function(req,res){
