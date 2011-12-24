@@ -3,7 +3,7 @@ var express = require('express'),
     url = require('url'),
     sys = require('util'),
     util = require('./lib/utils').util,
-    app = module.exports =  express.createServer( express.cookieParser(),express.session({ secret: 'keyboard cat' })),
+    app = module.exports =  express.createServer( express.cookieParser(),express.logger('dev'),express.session({ secret: 'keyboard cat' })),
     nowjs = require('now'),
     groups =[],
     escape = require('./lib/autolink'),
@@ -82,51 +82,63 @@ function isMember(array,path){
   });
   return f;
 }
-app.listen(process.env.PORT || 8080);
-console.log('Server on port: %s \non: %s ',app.address().port,app.settings.env);
+app.listen(8080);
+var ncomm = exports;
 
-var everyone = nowjs.initialize(app);
-everyone.now.joinRoom = function(req){
-     nowjs.getGroup(req.url).addUser(this.user.clientId);
-}
-everyone.now.sendComment = function(req) {
-    var self = this;
-    req = new Comment(req);
-    req.save(function(e,d){
-      if (d) {
-        nowjs.getGroup(req.url).now.receiveMessage(req.data.authorId,escape.autoLink(util.toStaticHTML(req.data.comment)));
-      } else {
-        nowjs.getClient(self.user.clientId, function(){        
-          this.now.receiveMessage('SERVER:', req.validateC());
-        });
-      }
+
+var neveryone  = ncomm.everyone = function (server) {
+  var everyone = ncomm.comment =  nowjs.initialize(server)
+  everyone.now.joinRoom = function(req){
+       nowjs.getGroup(req.url).addUser(this.user.clientId);
+  }
+  everyone.now.sendComment = function(req) {
+      var self = this;
+      req = new Comment(req);
+      req.save(function(e,d){
+        if (d) {
+          nowjs.getGroup(req.url).now.receiveMessage(
+            req.data.authorId,
+            escape.autoLink(util.toStaticHTML(req.data.comment))
+          );
+        } else {
+          nowjs.getClient(self.user.clientId, function(){
+            this.now.receiveMessage('SERVER:', req.validateC());
+          });
+        }
+      });
+  }
+  everyone.now.fetchBySite = function(req,res){
+    comments.fetchBySite(req.url,function(e,r){
+      res(e,r);
     });
-}
-everyone.now.fetchBySite = function(req,res){
-  comments.fetchBySite(req.url,function(e,r){
-    res(e,r);
-  });
-}
-everyone.now.fetchByThread = function(req,res){
-  comments.fetchByThread(req,function(e,r){
-    res(e,r);
-  });
-}
-everyone.now.send = function(req){   
-  if (req.data) {
-    nowjs.getGroup(req.url).now.receiveMessage(req.data.id, req.data.msg)   
-  } 
-}
-everyone.now.delete = function(req){
-  comments.deleteComment(req,function(e,d){
-    nowjs.getGroup(req.url).now.onEditMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
-  });
-}
-everyone.now.edit = function(req){
-  comments.edit(req,function(e,d){
-    nowjs.getGroup(req.url).now.onEditMessage(req.data.authorId,util.toStaticHTML(req.data.comment));
-  });
-}
-everyone.now.autoLink = function(req, res){
- res(escape.autoLink(req));
+  }
+  everyone.now.fetchByThread = function(req,res){
+    comments.fetchByThread(req,function(e,r){
+      res(e,r);
+    });
+  }
+  everyone.now.send = function(req){   
+    if (req.data) {
+      nowjs.getGroup(req.url).now.receiveMessage(req.data.id, req.data.msg)
+    } 
+  }
+  everyone.now.delete = function(req){
+    comments.deleteComment(req,function(e,d){
+      nowjs.getGroup(req.url).now.onEditMessage(
+        req.data.authorId,
+        util.toStaticHTML(req.data.comment)
+      );
+    });
+  }
+  everyone.now.edit = function(req){
+    comments.edit(req,function(e,d){
+      nowjs.getGroup(req.url).now.onEditMessage(
+        req.data.authorId,
+        util.toStaticHTML(req.data.comment));
+    });
+  }
+  everyone.now.autoLink = function(req, res){
+   res(escape.autoLink(req));
+  }
+  return this;
 }
